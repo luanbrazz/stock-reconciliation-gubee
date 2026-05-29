@@ -1,0 +1,12 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: gubee-postgres
+    environment:
+      POSTGRES_DB: stock_reconciliation
+      POSTGRES_USER: gubee
+      POSTGRES_PASSWORD: gubee
+    ports:
+      - "5432:5432"

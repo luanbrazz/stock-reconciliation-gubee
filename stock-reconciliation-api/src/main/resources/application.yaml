@@ -1,3 +1,16 @@
 spring:
   application:
     name: stock-reconciliation-api
+  datasource:
+    url: jdbc:postgresql://localhost:5432/stock_reconciliation
+    username: gubee
+    password: gubee
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    show-sql: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
