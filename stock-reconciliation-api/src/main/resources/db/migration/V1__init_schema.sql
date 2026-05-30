@@ -1,8 +1,6 @@
--- V1__init_schema.sql
-
 CREATE TABLE IF NOT EXISTS stock_balance (
-                                             id              BIGSERIAL PRIMARY KEY,
-                                             account_id      VARCHAR(100) NOT NULL,
+    id              BIGSERIAL PRIMARY KEY,
+    account_id      VARCHAR(100) NOT NULL,
     sku             VARCHAR(100) NOT NULL,
     quantity        INTEGER NOT NULL DEFAULT 0,
     last_updated_at TIMESTAMPTZ NOT NULL,
@@ -11,8 +9,8 @@ CREATE TABLE IF NOT EXISTS stock_balance (
     );
 
 CREATE TABLE IF NOT EXISTS stock_history (
-                                             id                BIGSERIAL PRIMARY KEY,
-                                             event_id          VARCHAR(100) NOT NULL,
+    id                BIGSERIAL PRIMARY KEY,
+    event_id          VARCHAR(100) NOT NULL,
     account_id        VARCHAR(100) NOT NULL,
     sku               VARCHAR(100) NOT NULL,
     event_type        VARCHAR(50)  NOT NULL,
@@ -30,7 +28,7 @@ CREATE INDEX idx_stock_history_account_sku
     ON stock_history (account_id, sku, occurred_at);
 
 CREATE TABLE IF NOT EXISTS processed_events (
-                                                event_id          VARCHAR(100) PRIMARY KEY,
+    event_id          VARCHAR(100) PRIMARY KEY,
     type              VARCHAR(50)  NOT NULL,
     status            VARCHAR(20)  NOT NULL,
     account_id        VARCHAR(100) NOT NULL,
