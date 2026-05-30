@@ -1,3 +1,4 @@
+# $schema: https://json.schemastore.org/spring-boot-application-yaml.json
 spring:
   application:
     name: stock-reconciliation-api
@@ -14,3 +15,4 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+    baseline-on-migrate: true
