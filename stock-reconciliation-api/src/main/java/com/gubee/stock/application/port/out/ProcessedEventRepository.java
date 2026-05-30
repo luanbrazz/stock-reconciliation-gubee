@@ -15,7 +15,7 @@ public interface ProcessedEventRepository {
     boolean existsCancellationFor(String marketplace, String accountId,
                                   String externalOrderId, String sku);
 
-    List<?> findByStatus(EventProcessingStatus status);
+    List<ProcessedEventSummary> findByStatus(EventProcessingStatus status);
 
     void deletePendingByEventId(String eventId);
 }
