@@ -1,5 +1,10 @@
 # $schema: https://json.schemastore.org/spring-boot-application-yaml.json
 spring:
+  springdoc:
+    api-docs:
+      path: /api-docs
+    swagger-ui:
+      path: /swagger-ui.html
   application:
     name: stock-reconciliation-api
   datasource:
