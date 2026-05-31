@@ -131,3 +131,55 @@ Este documento registra as principais decisões de design e arquitetura tomadas 
 - H2 não se comporta exatamente igual ao PostgreSQL — queries com `@Version`, índices específicos e constraints podem ter comportamentos diferentes.
 - Testcontainers garante que os testes rodam contra a mesma tecnologia que o ambiente de produção.
 - Os containers são gerenciados automaticamente pelo JUnit — sobem antes dos testes e são destruídos ao final, sem necessidade de infraestrutura externa no CI/CD.
+
+---
+
+## 13. Comportamento com múltiplas instâncias
+
+**Decisão:** a solução foi projetada para funcionar corretamente com múltiplas instâncias rodando em paralelo.
+
+**Como funciona:**
+- O **Redis distributed lock** (`SET NX PX`) é compartilhado entre todas as instâncias — apenas uma instância por vez processa eventos do mesmo `accountId:sku`, independente de quantas instâncias existam.
+- O **`@Version` otimista** no JPA é uma segunda camada — se duas instâncias passarem pelo lock ao mesmo tempo (ex: lock expirou), o Hibernate detecta a versão desatualizada e lança `OptimisticLockException`, evitando corrupção de dados.
+- O **Kafka com chave `accountId:sku`** garante que eventos do mesmo produto sempre vão para a mesma partição — e cada partição é consumida por apenas um consumer de cada vez, o que reduz naturalmente a concorrência entre instâncias.
+- A tabela `processed_events` com `event_id` como chave primária garante idempotência mesmo com múltiplas instâncias tentando inserir o mesmo evento simultaneamente — o banco retornará erro de constraint violada na segunda tentativa.
+
+---
+
+## 14. Trade-offs assumidos
+
+**Redis lock com TTL fixo de 10 segundos:**
+- Se uma transação demorar mais de 10 segundos, o lock expira e outra instância pode entrar. O `@Version` compensa esse cenário, mas a transação original vai falhar com `OptimisticLockException`. Em produção, o TTL deveria ser configurável e monitorado.
+
+**Reprocessamento de PENDING em memória:**
+- Os eventos `PENDING` são buscados e reprocessados dentro da mesma transação do `ORDER_CREATED`. Se existirem muitos eventos `PENDING` para o mesmo pedido (situação anormal), isso pode tornar a transação lenta. Em produção, isso poderia ser movido para um job assíncrono.
+
+**Fonte da verdade única por `accountId + SKU`:**
+- A decisão de não separar estoque por marketplace simplifica o modelo, mas significa que um cancelamento no Mercado Livre devolve estoque que também está disponível para a Shopee. Em produção, dependendo do modelo de negócio do cliente, pode ser necessário controle por marketplace.
+
+**Sem DLQ (Dead Letter Queue):**
+- Eventos que falham no consumer Kafka são apenas logados. Em produção, mensagens com falha deveriam ir para uma DLQ para reprocessamento manual ou automático.
+
+---
+
+## 15. O que foi simplificado por causa do prazo
+
+- **Sem autenticação/autorização:** os endpoints são públicos. Em produção, seria necessário JWT ou API Key para proteger a API.
+- **Sem DLQ no Kafka:** falhas no consumer são apenas logadas, sem mecanismo de reprocessamento automático.
+- **Sem métricas e observabilidade:** não foram implementados Prometheus, Grafana ou Kibana. Em produção, seria essencial monitorar latência, throughput e taxa de inconsistências.
+- **Sem rate limiting:** a API não possui proteção contra abuso. Em produção, seria necessário limitar requisições por `accountId`.
+- **Testes unitários do `ProcessEventService`:** apenas testes de integração foram implementados. Testes unitários com Mockito aumentariam a velocidade do feedback no desenvolvimento.
+- **Reprocessamento de PENDING síncrono:** o reprocessamento acontece dentro da transação do `ORDER_CREATED`. Uma abordagem mais robusta seria um job agendado que varre eventos `PENDING` periodicamente.
+
+---
+
+## 16. O que faria diferente em produção
+
+- **DLQ para eventos com falha:** mensagens que falham repetidamente no Kafka seriam enviadas para uma Dead Letter Queue, com alertas para a equipe de operações.
+- **Observabilidade completa:** Prometheus + Grafana para métricas de negócio (taxa de inconsistências por marketplace, latência de processamento, volume de eventos por tipo) e Kibana para logs estruturados e rastreamento de eventos.
+- **TTL do lock configurável por ambiente:** o Redis lock TTL seria uma propriedade externa (`application.yaml`) para ajuste fino por ambiente.
+- **Separação de estoque por marketplace (opcional):** dependendo do modelo de negócio, o controle por `accountId + marketplace + sku` poderia evitar que cancelamentos de um marketplace impactem a disponibilidade em outros.
+- **Job de reprocessamento de PENDING:** um scheduler periódico (ex: a cada 5 minutos) que tenta reprocessar eventos `PENDING` antigos, com limite de tentativas e escalada para `INCONSISTENT` após N falhas.
+- **Autenticação via API Key por accountId:** cada seller teria sua própria API Key, limitando acesso apenas aos seus próprios dados.
+- **Versionamento de API:** prefixo `/v1/` nos endpoints para permitir evoluções sem quebrar clientes existentes.
+- **Testes de carga:** validar o comportamento do sistema com volume alto de eventos simultâneos (ex: Black Friday) antes de ir para produção.
