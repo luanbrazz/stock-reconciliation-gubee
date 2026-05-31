@@ -45,8 +45,9 @@ public class ProcessedEventAdapter implements ProcessedEventRepository {
     @Override
     public boolean existsCancellationFor(String marketplace, String accountId,
                                          String externalOrderId, String sku) {
-        return jpaRepository.existsByTypeAndBusinessKey(
-                StockEventType.ORDER_CANCELLED,
+        return jpaRepository.existsByTypesAndBusinessKey(
+                List.of(StockEventType.ORDER_CANCELLED,
+                        StockEventType.MARKETPLACE_STOCK_RESTORED),
                 marketplace, accountId, externalOrderId, sku);
     }
 

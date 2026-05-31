@@ -32,6 +32,22 @@ public interface JpaProcessedEventRepository extends JpaRepository<ProcessedEven
             @Param("externalOrderId") String externalOrderId,
             @Param("sku") String sku);
 
+    @Query("""
+            SELECT COUNT(e) > 0 FROM ProcessedEventEntity e
+            WHERE e.type IN (:types)
+              AND e.marketplace = :marketplace
+              AND e.accountId = :accountId
+              AND e.externalOrderId = :externalOrderId
+              AND e.sku = :sku
+              AND e.status = 'PROCESSED'
+            """)
+    boolean existsByTypesAndBusinessKey(
+            @Param("types") java.util.List<StockEventType> types,
+            @Param("marketplace") String marketplace,
+            @Param("accountId") String accountId,
+            @Param("externalOrderId") String externalOrderId,
+            @Param("sku") String sku);
+
     @Modifying(clearAutomatically = true)
     @Query("DELETE FROM ProcessedEventEntity e WHERE e.eventId = :eventId AND e.status = 'PENDING'")
     void deletePendingByEventId(@Param("eventId") String eventId);
