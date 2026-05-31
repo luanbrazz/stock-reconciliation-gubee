@@ -1,13 +1,12 @@
 package com.gubee.stock;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
+@Disabled("Classe placeholder do Spring Initializr — testes reais estão em StockReconciliationIntegrationTest")
 class StockReconciliationApiApplicationTests {
 
-	@Test
-	void contextLoads() {
-	}
-
+    @Test
+    void contextLoads() {
+    }
 }
