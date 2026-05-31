@@ -1,0 +1,987 @@
+{
+  "info": {
+    "_postman_id": "877ac5eb-a583-4ae1-b671-f9e383be4b89",
+    "name": "Gubee Stock Reconciliation",
+    "description": "Collection de testes E2E para o desafio técnico Gubee — reconciliação de estoque para marketplaces.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "27842506",
+    "_collection_link": "https://go.postman.co/collection/27842506-877ac5eb-a583-4ae1-b671-f9e383be4b89?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Cenário 1 - STOCK_ADJUSTED",
+      "item": [
+        {
+          "name": "1.1 - Ajuste de estoque (available=10)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status HTTP deve ser 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Status do evento deve ser PROCESSED', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.status).to.eql('PROCESSED');",
+                  "});",
+                  "pm.test('EventId deve ser retornado', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.eventId).to.eql('e2e-s1-adj');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept-Language",
+                "value": "pt-BR"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"e2e-s1-adj\",\n  \"type\": \"STOCK_ADJUSTED\",\n  \"occurredAt\": \"2026-01-01T10:00:00Z\",\n  \"accountId\": \"{{accountId}}\",\n  \"sku\": \"{{sku}}\",\n  \"available\": 10,\n  \"reason\": \"carga_inicial\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1.2 - Verificar estoque = 10",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status HTTP deve ser 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Quantidade deve ser 10', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.quantity).to.eql(10);",
+                  "});",
+                  "pm.test('AccountId correto', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.accountId).to.eql(pm.collectionVariables.get('accountId'));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/stocks/{{accountId}}/{{sku}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "stocks",
+                "{{accountId}}",
+                "{{sku}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Cenário 2 - ORDER_CREATED reduz estoque",
+      "item": [
+        {
+          "name": "2.1 - Criar pedido ML-E2E-001 (quantity=2)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status HTTP deve ser 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Status do evento deve ser PROCESSED', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.status).to.eql('PROCESSED');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"e2e-s2-order\",\n  \"type\": \"ORDER_CREATED\",\n  \"occurredAt\": \"2026-01-01T10:01:00Z\",\n  \"marketplace\": \"MERCADO_LIVRE\",\n  \"accountId\": \"{{accountId}}\",\n  \"externalOrderId\": \"ML-E2E-001\",\n  \"sku\": \"{{sku}}\",\n  \"quantity\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2.2 - Verificar estoque = 8",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Quantidade deve ser 8 após pedido de 2', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.quantity).to.eql(8);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/stocks/{{accountId}}/{{sku}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "stocks",
+                "{{accountId}}",
+                "{{sku}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Cenário 3 - ORDER_CANCELLED restaura estoque",
+      "item": [
+        {
+          "name": "3.1 - Cancelar pedido ML-E2E-001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status do evento deve ser PROCESSED', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.status).to.eql('PROCESSED');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"e2e-s3-cancel\",\n  \"type\": \"ORDER_CANCELLED\",\n  \"occurredAt\": \"2026-01-01T10:05:00Z\",\n  \"marketplace\": \"MERCADO_LIVRE\",\n  \"accountId\": \"{{accountId}}\",\n  \"externalOrderId\": \"ML-E2E-001\",\n  \"sku\": \"{{sku}}\",\n  \"quantity\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3.2 - Verificar estoque = 10 após cancelamento",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Quantidade deve voltar para 10 após cancelamento', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.quantity).to.eql(10);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/stocks/{{accountId}}/{{sku}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "stocks",
+                "{{accountId}}",
+                "{{sku}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Cenário 4 - Idempotência (eventId duplicado)",
+      "item": [
+        {
+          "name": "4.1 - Enviar e2e-s1-adj novamente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status deve ser IGNORED para eventId duplicado', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.status).to.eql('IGNORED');",
+                  "});",
+                  "pm.test('Status HTTP deve ser 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"e2e-s1-adj\",\n  \"type\": \"STOCK_ADJUSTED\",\n  \"occurredAt\": \"2026-01-01T10:00:00Z\",\n  \"accountId\": \"{{accountId}}\",\n  \"sku\": \"{{sku}}\",\n  \"available\": 10,\n  \"reason\": \"carga_inicial\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4.2 - Verificar estoque não duplicou",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estoque não deve ter sido duplicado', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.quantity).to.eql(10);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/stocks/{{accountId}}/{{sku}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "stocks",
+                "{{accountId}}",
+                "{{sku}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Cenário 5 - Cancelamento duplicado (INCONSISTENT)",
+      "item": [
+        {
+          "name": "5.1 - Criar pedido ML-E2E-002",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status deve ser PROCESSED', function () {",
+                  "    pm.expect(pm.response.json().status).to.eql('PROCESSED');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"e2e-s5-order\",\n  \"type\": \"ORDER_CREATED\",\n  \"occurredAt\": \"2026-01-01T11:00:00Z\",\n  \"marketplace\": \"MERCADO_LIVRE\",\n  \"accountId\": \"{{accountId}}\",\n  \"externalOrderId\": \"ML-E2E-002\",\n  \"sku\": \"{{sku}}\",\n  \"quantity\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5.2 - Cancelar pedido ML-E2E-002 (1ª vez)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Primeiro cancelamento deve ser PROCESSED', function () {",
+                  "    pm.expect(pm.response.json().status).to.eql('PROCESSED');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"e2e-s5-cancel1\",\n  \"type\": \"ORDER_CANCELLED\",\n  \"occurredAt\": \"2026-01-01T11:05:00Z\",\n  \"marketplace\": \"MERCADO_LIVRE\",\n  \"accountId\": \"{{accountId}}\",\n  \"externalOrderId\": \"ML-E2E-002\",\n  \"sku\": \"{{sku}}\",\n  \"quantity\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5.3 - Cancelar pedido ML-E2E-002 (2ª vez — deve ser INCONSISTENT)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Segundo cancelamento deve ser INCONSISTENT', function () {",
+                  "    pm.expect(pm.response.json().status).to.eql('INCONSISTENT');",
+                  "});",
+                  "pm.test('Status HTTP deve ser 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"e2e-s5-cancel2\",\n  \"type\": \"ORDER_CANCELLED\",\n  \"occurredAt\": \"2026-01-01T11:06:00Z\",\n  \"marketplace\": \"MERCADO_LIVRE\",\n  \"accountId\": \"{{accountId}}\",\n  \"externalOrderId\": \"ML-E2E-002\",\n  \"sku\": \"{{sku}}\",\n  \"quantity\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5.4 - Verificar inconsistência registrada",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Deve existir ao menos 1 inconsistência', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.totalElements).to.be.above(0);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inconsistencies",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "inconsistencies"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Cenário 6 - Evento fora de ordem (PENDING → reprocessado)",
+      "item": [
+        {
+          "name": "6.1 - Cancelamento chega antes do pedido (deve ser PENDING)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Cancelamento fora de ordem deve ser PENDING', function () {",
+                  "    pm.expect(pm.response.json().status).to.eql('PENDING');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"e2e-s6-cancel\",\n  \"type\": \"ORDER_CANCELLED\",\n  \"occurredAt\": \"2026-01-01T12:05:00Z\",\n  \"marketplace\": \"SHOPEE\",\n  \"accountId\": \"{{accountId}}\",\n  \"externalOrderId\": \"SHP-E2E-001\",\n  \"sku\": \"{{sku}}\",\n  \"quantity\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "6.2 - Verificar eventos PENDING",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Deve existir ao menos 1 evento PENDING', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.totalElements).to.be.above(0);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/events?status=PENDING",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "PENDING"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "6.3 - Pedido chega depois (deve reprocessar o cancelamento)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Pedido tardio deve ser PROCESSED', function () {",
+                  "    pm.expect(pm.response.json().status).to.eql('PROCESSED');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"e2e-s6-order\",\n  \"type\": \"ORDER_CREATED\",\n  \"occurredAt\": \"2026-01-01T12:00:00Z\",\n  \"marketplace\": \"SHOPEE\",\n  \"accountId\": \"{{accountId}}\",\n  \"externalOrderId\": \"SHP-E2E-001\",\n  \"sku\": \"{{sku}}\",\n  \"quantity\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "6.4 - Verificar estoque após reprocessamento",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Estoque deve ser 10 após order+cancel reprocessado', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.quantity).to.eql(10);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/stocks/{{accountId}}/{{sku}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "stocks",
+                "{{accountId}}",
+                "{{sku}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Cenário 7 - MARKETPLACE_STOCK_RESTORED + cancel = INCONSISTENT",
+      "item": [
+        {
+          "name": "7.1 - Criar pedido ML-E2E-003",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status deve ser PROCESSED', function () {",
+                  "    pm.expect(pm.response.json().status).to.eql('PROCESSED');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"e2e-s7-order\",\n  \"type\": \"ORDER_CREATED\",\n  \"occurredAt\": \"2026-01-01T13:00:00Z\",\n  \"marketplace\": \"MERCADO_LIVRE\",\n  \"accountId\": \"{{accountId}}\",\n  \"externalOrderId\": \"ML-E2E-003\",\n  \"sku\": \"{{sku}}\",\n  \"quantity\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "7.2 - Marketplace restaura estoque automaticamente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('MARKETPLACE_STOCK_RESTORED deve ser PROCESSED', function () {",
+                  "    pm.expect(pm.response.json().status).to.eql('PROCESSED');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"e2e-s7-restore\",\n  \"type\": \"MARKETPLACE_STOCK_RESTORED\",\n  \"occurredAt\": \"2026-01-01T13:10:00Z\",\n  \"marketplace\": \"MERCADO_LIVRE\",\n  \"accountId\": \"{{accountId}}\",\n  \"externalOrderId\": \"ML-E2E-003\",\n  \"sku\": \"{{sku}}\",\n  \"quantity\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "7.3 - Cancelamento após restore deve ser INCONSISTENT",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Cancel após restore deve ser INCONSISTENT', function () {",
+                  "    pm.expect(pm.response.json().status).to.eql('INCONSISTENT');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"e2e-s7-cancel\",\n  \"type\": \"ORDER_CANCELLED\",\n  \"occurredAt\": \"2026-01-01T13:15:00Z\",\n  \"marketplace\": \"MERCADO_LIVRE\",\n  \"accountId\": \"{{accountId}}\",\n  \"externalOrderId\": \"ML-E2E-003\",\n  \"sku\": \"{{sku}}\",\n  \"quantity\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Cenário 8 - Paginação e histórico",
+      "item": [
+        {
+          "name": "8.1 - Histórico paginado (page=0, size=2)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status HTTP deve ser 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Deve retornar exatamente 2 registros na página', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.content.length).to.eql(2);",
+                  "});",
+                  "pm.test('pageSize deve ser 2', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.pageable.pageSize).to.eql(2);",
+                  "});",
+                  "pm.test('totalElements deve ser maior que 2', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.totalElements).to.be.above(2);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/stocks/{{accountId}}/{{sku}}/history?page=0&size=2",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "stocks",
+                "{{accountId}}",
+                "{{sku}}",
+                "history"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "2"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "8.2 - Inconsistências paginadas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status HTTP deve ser 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Deve ter estrutura de paginação', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('content');",
+                  "    pm.expect(json).to.have.property('totalElements');",
+                  "    pm.expect(json).to.have.property('totalPages');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inconsistencies?page=0&size=5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "inconsistencies"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "5"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "8.3 - i18n: resposta em português",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Mensagem deve estar em português', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.message).to.eql('EventId duplicado — evento ignorado');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept-Language",
+                "value": "pt-BR"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"e2e-s1-adj\",\n  \"type\": \"STOCK_ADJUSTED\",\n  \"occurredAt\": \"2026-01-01T10:00:00Z\",\n  \"accountId\": \"{{accountId}}\",\n  \"sku\": \"{{sku}}\",\n  \"available\": 10,\n  \"reason\": \"carga_inicial\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "8.4 - i18n: resposta em inglês",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Mensagem deve estar em inglês', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.message).to.eql('Duplicate eventId — event ignored');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept-Language",
+                "value": "en"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"e2e-s1-adj\",\n  \"type\": \"STOCK_ADJUSTED\",\n  \"occurredAt\": \"2026-01-01T10:00:00Z\",\n  \"accountId\": \"{{accountId}}\",\n  \"sku\": \"{{sku}}\",\n  \"available\": 10,\n  \"reason\": \"carga_inicial\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "events"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "accountId",
+      "value": "e2e-account-001"
+    },
+    {
+      "key": "sku",
+      "value": "E2E-SKU-001"
+    }
+  ]
+}
