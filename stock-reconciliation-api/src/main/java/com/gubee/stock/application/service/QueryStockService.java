@@ -7,6 +7,8 @@ import com.gubee.stock.domain.exception.StockNotFoundException;
 import com.gubee.stock.domain.model.StockBalance;
 import com.gubee.stock.domain.model.StockHistory;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,7 +30,8 @@ public class QueryStockService implements QueryStockUseCase {
 
     @Override
     @Transactional(readOnly = true)
-    public List<StockHistory> getHistory(String accountId, String sku) {
-        return historyRepository.findByAccountIdAndSku(accountId, sku);
+    public Page<StockHistory> getHistory(String accountId, String sku, Pageable pageable) {
+        getCurrentStock(accountId, sku);
+        return historyRepository.findByAccountIdAndSku(accountId, sku, pageable);
     }
 }

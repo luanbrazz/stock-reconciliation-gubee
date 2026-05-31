@@ -7,6 +7,8 @@ import com.gubee.stock.domain.model.StockEventType;
 import com.gubee.stock.infrastructure.persistence.entity.ProcessedEventEntity;
 import com.gubee.stock.infrastructure.persistence.repository.JpaProcessedEventRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
@@ -63,7 +65,18 @@ public class ProcessedEventAdapter implements ProcessedEventRepository {
     }
 
     @Override
+    public Page<ProcessedEventSummary> findByStatus(EventProcessingStatus status, Pageable pageable) {
+        return jpaRepository.findByStatus(status, pageable)
+                .map(e -> new ProcessedEventSummary(
+                        e.getEventId(), e.getType(), e.getStatus(),
+                        e.getAccountId(), e.getSku(), e.getMarketplace(),
+                        e.getExternalOrderId(), e.getQuantity(), e.getOccurredAt()));
+    }
+
+    @Override
     public void deletePendingByEventId(String eventId) {
         jpaRepository.deletePendingByEventId(eventId);
     }
+
+
 }

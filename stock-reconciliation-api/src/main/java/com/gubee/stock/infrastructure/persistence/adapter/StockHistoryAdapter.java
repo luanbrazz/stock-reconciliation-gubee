@@ -5,6 +5,8 @@ import com.gubee.stock.domain.model.StockHistory;
 import com.gubee.stock.infrastructure.persistence.entity.StockHistoryEntity;
 import com.gubee.stock.infrastructure.persistence.repository.JpaStockHistoryRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -34,10 +36,9 @@ public class StockHistoryAdapter implements StockHistoryRepository {
     }
 
     @Override
-    public List<StockHistory> findByAccountIdAndSku(String accountId, String sku) {
+    public Page<StockHistory> findByAccountIdAndSku(String accountId, String sku, Pageable pageable) {
         return jpaRepository
-                .findByAccountIdAndSkuOrderByOccurredAtAsc(accountId, sku)
-                .stream()
+                .findByAccountIdAndSkuOrderByOccurredAtDesc(accountId, sku, pageable)
                 .map(e -> StockHistory.builder()
                         .eventId(e.getEventId())
                         .accountId(e.getAccountId())
@@ -51,7 +52,6 @@ public class StockHistoryAdapter implements StockHistoryRepository {
                         .reason(e.getReason())
                         .occurredAt(e.getOccurredAt())
                         .processedAt(e.getProcessedAt())
-                        .build())
-                .toList();
+                        .build());
     }
 }

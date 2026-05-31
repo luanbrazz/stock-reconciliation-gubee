@@ -3,18 +3,20 @@ package com.gubee.stock.infrastructure.persistence.repository;
 import com.gubee.stock.domain.model.EventProcessingStatus;
 import com.gubee.stock.domain.model.StockEventType;
 import com.gubee.stock.infrastructure.persistence.entity.ProcessedEventEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.util.List;
-
 public interface JpaProcessedEventRepository extends JpaRepository<ProcessedEventEntity, String> {
 
     boolean existsByEventId(String eventId);
 
-    List<ProcessedEventEntity> findByStatus(EventProcessingStatus status);
+    java.util.List<ProcessedEventEntity> findByStatus(EventProcessingStatus status);
+
+    Page<ProcessedEventEntity> findByStatus(EventProcessingStatus status, Pageable pageable);
 
     @Query("""
             SELECT COUNT(e) > 0 FROM ProcessedEventEntity e

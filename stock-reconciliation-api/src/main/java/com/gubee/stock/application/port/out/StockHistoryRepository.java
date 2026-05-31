@@ -1,11 +1,11 @@
 package com.gubee.stock.application.port.out;
 
 import com.gubee.stock.domain.model.StockHistory;
-
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface StockHistoryRepository {
     void save(StockHistory history);
 
-    List<StockHistory> findByAccountIdAndSku(String accountId, String sku);
+    Page<StockHistory> findByAccountIdAndSku(String accountId, String sku, Pageable pageable);
 }
