@@ -5,6 +5,7 @@ import com.gubee.stock.application.port.in.QueryInconsistenciesUseCase;
 import com.gubee.stock.application.port.in.QueryStockUseCase;
 import com.gubee.stock.application.port.out.EventPublisherPort;
 import com.gubee.stock.domain.model.EventProcessingStatus;
+import com.gubee.stock.infrastructure.util.MessageUtil;
 import com.gubee.stock.infrastructure.web.dto.EventRequest;
 import com.gubee.stock.infrastructure.web.dto.EventResponse;
 import com.gubee.stock.infrastructure.web.dto.HistoryResponse;
@@ -29,6 +30,7 @@ public class StockController {
     private final QueryInconsistenciesUseCase queryInconsistenciesUseCase;
     private final EventPublisherPort eventPublisherPort;
     private final StockWebMapper mapper;
+    private final MessageUtil messageUtil;
 
     @PostMapping("/events")
     @Operation(summary = "Submit a stock event")
@@ -38,14 +40,15 @@ public class StockController {
         var event = mapper.toDomain(request);
         var status = processEventUseCase.process(event);
 
-        String message = switch (status) {
-            case PROCESSED -> "Event applied successfully";
-            case IGNORED -> "Duplicate eventId — event ignored";
-            case PENDING -> "Event pending: out-of-order, waiting for dependency";
-            case INCONSISTENT -> "Event flagged as inconsistent — see /inconsistencies";
+        String messageKey = switch (status) {
+            case PROCESSED -> "event.status.processed";
+            case IGNORED -> "event.status.ignored";
+            case PENDING -> "event.status.pending";
+            case INCONSISTENT -> "event.status.inconsistent";
         };
 
-        return ResponseEntity.ok(new EventResponse(request.eventId(), status, message));
+        return ResponseEntity.ok(
+                new EventResponse(request.eventId(), status, messageUtil.get(messageKey)));
     }
 
     @GetMapping("/stocks/{accountId}/{sku}")
